@@ -5,7 +5,7 @@ import zipfile
 from decimal import Decimal
 from pathlib import Path
 
-from yabilabb.models import Declaration, Declarant, Operator, Rectification
+from yabilabb.models import Declaration, Declarant, Operator, Rectification, BilaMetadata
 
 
 def _extract_tmp(path: Path) -> str:
@@ -21,11 +21,22 @@ def _parse_cmp_fields(content: str) -> dict[str, str]:
     fields = {}
     for m in re.finditer(r"<CMP ID='(\w+)'[^>]*>([^<]*)</CMP>", content):
         fields[m.group(1)] = m.group(2)
-    # Also get self-closing CMPs (empty values)
     for m in re.finditer(r"<CMP ID='(\w+)'[^/]*/\s*>", content):
         if m.group(1) not in fields:
             fields[m.group(1)] = ""
     return fields
+
+
+def _extract_xml_tag(content: str, tag: str) -> str:
+    """Extract the text content of an XML tag."""
+    m = re.search(rf"<{tag}>([^<]*)</{tag}>", content)
+    return m.group(1) if m else ""
+
+
+def _extract_impresos(content: str) -> str:
+    """Extract the raw IMPRESOS section."""
+    m = re.search(r"(<IMPRESOS>.*?</IMPRESOS>)", content, re.DOTALL)
+    return m.group(1) if m else ""
 
 
 def _parse_type1(record: str) -> dict:
@@ -42,6 +53,7 @@ def _parse_type1(record: str) -> dict:
         "num_rectifications": int(record[161:170]),
         "rect_cents": int(record[170:185]),
         "substitutive": record[121] == "S",
+        "record_tail": record[399:500],
     }
 
 
@@ -88,6 +100,15 @@ def parse_349(path: Path) -> Declaration:
     """Parse a .349 file into a Declaration model."""
     content = _extract_tmp(path)
 
+    # Extract R0 metadata
+    bila_meta = BilaMetadata(
+        origen=_extract_xml_tag(content, "ORIGEN") or "YBM34920",
+        version=_extract_xml_tag(content, "VERSION") or "510104",
+        ver_preimp_orig=_extract_xml_tag(content, "VER_PREIMP_ORIG") or "V1.1.4 1-2020",
+        version_plataforma=_extract_xml_tag(content, "VERSION_PLATAFORMA") or "010161",
+        impresos=_extract_impresos(content),
+    )
+
     # Extract DATOS section records
     datos_match = re.search(r"<DATOS>(.*?)</DATOS>", content, re.DOTALL)
     if not datos_match:
@@ -102,18 +123,17 @@ def parse_349(path: Path) -> Declaration:
     if not subregs:
         raise ValueError("No SUBREG records found")
 
-    # Filter to 500-char records (skip IMPRESOS-style records)
     records = [s for s in subregs if len(s) == 500]
 
-    # First record should be Type 1
     type1 = records[0]
     if type1[0] != "1":
         raise ValueError(f"Expected Type 1 record, got type '{type1[0]}'")
 
     header = _parse_type1(type1)
+    bila_meta.record_tail = header["record_tail"]
 
-    # Parse CMP fields for extra info
     cmp = _parse_cmp_fields(content)
+    bila_meta.sellohoja = cmp.get("SELLOHOJA", "")
 
     operators = []
     rectifications = []
@@ -140,4 +160,5 @@ def parse_349(path: Path) -> Declaration:
         rectifications=rectifications,
         substitutive=header["substitutive"],
         idioma=cmp.get("IDIOMA", "C"),
+        bila_metadata=bila_meta,
     )

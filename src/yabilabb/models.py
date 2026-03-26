@@ -109,6 +109,22 @@ class Rectification(BaseModel):
         return v
 
 
+class BilaMetadata(BaseModel):
+    """BILA-specific metadata preserved from imported files.
+
+    BFA's server validates that files look like BILA output,
+    so we must replicate or preserve these values.
+    """
+
+    origen: str = "YBM34920"
+    version: str = "510104"
+    ver_preimp_orig: str = "V1.1.4 1-2020"
+    version_plataforma: str = "010161"
+    sellohoja: str = ""
+    impresos: str = ""  # raw IMPRESOS section content
+    record_tail: str = ""  # Type 1 record positions 400-500
+
+
 class Declaration(BaseModel):
     """A complete Modelo 349 declaration."""
 
@@ -119,6 +135,7 @@ class Declaration(BaseModel):
     rectifications: list[Rectification] = []
     substitutive: bool = False
     idioma: str = "C"
+    bila_metadata: BilaMetadata = BilaMetadata()
 
     @field_validator("period")
     @classmethod

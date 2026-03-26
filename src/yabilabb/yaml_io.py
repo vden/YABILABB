@@ -5,7 +5,7 @@ from pathlib import Path
 
 import yaml
 
-from yabilabb.models import Declaration, Declarant, Operator, Rectification
+from yabilabb.models import Declaration, Declarant, Operator, Rectification, BilaMetadata
 
 
 def load_declaration(path: Path) -> Declaration:
@@ -43,6 +43,19 @@ def load_declaration(path: Path) -> Declaration:
             substitute_name=r.get("substitute_name", ""),
         ))
 
+    bila_meta = BilaMetadata()
+    if "bila_metadata" in data:
+        m = data["bila_metadata"]
+        bila_meta = BilaMetadata(
+            origen=m.get("origen", "YBM34920"),
+            version=m.get("version", "510104"),
+            ver_preimp_orig=m.get("ver_preimp_orig", "V1.1.4 1-2020"),
+            version_plataforma=m.get("version_plataforma", "010161"),
+            sellohoja=m.get("sellohoja", ""),
+            impresos=m.get("impresos", ""),
+            record_tail=m.get("record_tail", ""),
+        )
+
     return Declaration(
         exercise_year=data["exercise_year"],
         period=str(data["period"]),
@@ -51,6 +64,7 @@ def load_declaration(path: Path) -> Declaration:
         rectifications=rectifications,
         substitutive=data.get("substitutive", False),
         idioma=data.get("idioma", "C"),
+        bila_metadata=bila_meta,
     )
 
 
@@ -102,6 +116,22 @@ def save_declaration(decl: Declaration, path: Path) -> None:
         data["substitutive"] = True
     if decl.idioma != "C":
         data["idioma"] = decl.idioma
+
+    # Always preserve BILA metadata for re-export compatibility
+    meta = decl.bila_metadata
+    meta_dict = {
+        "origen": meta.origen,
+        "version": meta.version,
+        "ver_preimp_orig": meta.ver_preimp_orig,
+        "version_plataforma": meta.version_plataforma,
+    }
+    if meta.sellohoja:
+        meta_dict["sellohoja"] = meta.sellohoja
+    if meta.impresos:
+        meta_dict["impresos"] = meta.impresos
+    if meta.record_tail and meta.record_tail.strip():
+        meta_dict["record_tail"] = meta.record_tail
+    data["bila_metadata"] = meta_dict
 
     path.write_text(
         yaml.dump(data, allow_unicode=True, default_flow_style=False, sort_keys=False),

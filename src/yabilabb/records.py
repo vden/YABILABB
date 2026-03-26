@@ -62,8 +62,25 @@ def build_type1_record(
         " ",                                              # 186: cambio periodicidad
         " " * 204,                                        # 187-390: blancos
         " " * 9,                                          # 391-399: NIF representante
-        " " * 101,                                        # 400-500: blancos
     ]
+    # Positions 400-500: BILA metadata tail or blanks
+    tail = decl.bila_metadata.record_tail if decl.bila_metadata.record_tail.strip() else ""
+    if tail:
+        parts.append(tail.ljust(101)[:101])
+    else:
+        # Generate BILA-compatible tail
+        parts.append(
+            " " * 23                                          # 400-422: blancos
+            + "CKI"                                           # 423-425: app code
+            + "21"                                            # 426-427: format
+            + "S"                                             # 428: sign
+            + "10100"                                         # 429-433: version
+            + " " * 12                                        # 434-445: blancos
+            + creation_date.strftime("%Y%m%d")                # 446-453: creation date
+            + _alpha("INTERNET", 17)                          # 454-470: medium
+            + "2020"                                          # 471-474: preimp year
+            + " " * 26                                        # 475-500: blancos
+        )
     record = "".join(parts)
     assert len(record) == RECORD_LEN, f"Type 1 record is {len(record)}, expected {RECORD_LEN}"
     return record

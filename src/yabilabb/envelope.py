@@ -49,24 +49,28 @@ def _build_rc_section(datos_hash: str) -> str:
 
 
 def _build_r0_section(decl: Declaration, creation_dt: datetime) -> str:
-    """Build the <R0> metadata section."""
+    """Build the <R0> metadata section using BILA-compatible values."""
+    meta = decl.bila_metadata
+    period_val = decl.period
+    if period_val.endswith("T"):
+        period_val = period_val[0]
     lines = [
         "<R0>",
         "<PROC>H</PROC>",
         f"<EJER>{decl.exercise_year}</EJER>",
         "<MOD>349</MOD>",
-        f"<PERIODO>{decl.period.replace('T', '')}</PERIODO>" if decl.period.endswith("T") else f"<PERIODO>{decl.period}</PERIODO>",
+        f"<PERIODO>{period_val}</PERIODO>",
         f"<FCREAC>{creation_dt.strftime('%Y%m%d')}</FCREAC>",
         f"<HCREAC>{creation_dt.strftime('%H%M%S')}</HCREAC>",
-        "<ORIGEN>YABILABB</ORIGEN>",
+        f"<ORIGEN>{meta.origen}</ORIGEN>",
         "<LEUSK />",
         "<LCAST />",
-        "<VERSION>010000</VERSION>",
-        "<VER_PREIMP_ORIG>V0.1.0</VER_PREIMP_ORIG>",
+        f"<VERSION>{meta.version}</VERSION>",
+        f"<VER_PREIMP_ORIG>{meta.ver_preimp_orig}</VER_PREIMP_ORIG>",
         "<ENTORNO>P</ENTORNO>",
         "<ORIGEN_DECLARACION>PL</ORIGEN_DECLARACION>",
-        "<SISTEMA_OPERATIVO>U</SISTEMA_OPERATIVO>",
-        "<VERSION_PLATAFORMA>010000</VERSION_PLATAFORMA>",
+        "<SISTEMA_OPERATIVO>W</SISTEMA_OPERATIVO>",
+        f"<VERSION_PLATAFORMA>{meta.version_plataforma}</VERSION_PLATAFORMA>",
         "</R0>",
     ]
     return CRLF.join(lines)
@@ -115,7 +119,7 @@ def _build_rd_section(decl: Declaration) -> str:
         _cmp("NUM005"),
         _cmp("NUM006"),
         _cmp("CAMBIOPERIODO"),
-        _cmp("SELLOHOJA"),
+        _cmp("SELLOHOJA", decl.bila_metadata.sellohoja),
         _cmp("IDIOMA", decl.idioma),
         _cmp("PRESIND", "X"),
         _cmp("PRESPRESENT"),
@@ -171,10 +175,8 @@ def build_envelope(
     datos_bytes = datos_section.encode("iso-8859-1")
     datos_hash = hashlib.md5(datos_bytes).hexdigest().upper()
 
-    # Build the period value for R0
-    period_val = decl.period
-    if period_val.endswith("T"):
-        period_val = period_val[0]  # "1T" -> "1"
+    # Use preserved IMPRESOS or empty
+    impresos = decl.bila_metadata.impresos if decl.bila_metadata.impresos else f"<IMPRESOS>{CRLF}</IMPRESOS>"
 
     sections = [
         "<ENVIO>",
@@ -182,8 +184,7 @@ def build_envelope(
         _build_r0_section(decl, creation_dt),
         _build_rd_section(decl),
         datos_section,
-        "<IMPRESOS>",
-        "</IMPRESOS>",
+        impresos,
         "</ENVIO>",
     ]
     content = CRLF.join(sections)
