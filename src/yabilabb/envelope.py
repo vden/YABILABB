@@ -183,23 +183,30 @@ def build_envelope(
     records = build_all_records(decl, creation_dt.date())
     datos_section = _build_datos_section(records)
 
-    # Use preserved hash if available, otherwise compute MD5
-    if meta.hash:
-        datos_hash = meta.hash
-    else:
-        datos_bytes = datos_section.encode("iso-8859-1")
-        datos_hash = hashlib.md5(datos_bytes).hexdigest().upper()
-
     # Use preserved IMPRESOS or empty
     impresos = meta.impresos if meta.impresos else f"<IMPRESOS>{CRLF}</IMPRESOS>"
 
+    # Build the body (everything between </RC> and </ENVIO>)
+    r0_section = _build_r0_section(decl, creation_dt)
+    rd_section = _build_rd_section(decl)
+    body = CRLF.join([r0_section, rd_section, datos_section, impresos])
+
+    # Compute BILA hash: salted MD5 of body content
+    # Salt = "BIZKAIKO FORU ALDUNDIA" padded to 64 chars
+    # Reverse-engineered from net.bizkaia.bila.n4li.utils.MD5
+    if meta.hash:
+        datos_hash = meta.hash
+    else:
+        salt = "BIZKAIKO FORU ALDUNDIA".ljust(64)
+        hash_input = (salt + body).encode("iso-8859-1")
+        datos_hash = hashlib.md5(hash_input).hexdigest().upper()
+
+    rc_section = _build_rc_section(datos_hash)
+
     sections = [
         "<ENVIO>",
-        _build_rc_section(datos_hash),
-        _build_r0_section(decl, creation_dt),
-        _build_rd_section(decl),
-        datos_section,
-        impresos,
+        rc_section,
+        body,
         "</ENVIO>",
     ]
     content = CRLF.join(sections)
