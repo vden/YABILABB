@@ -123,6 +123,9 @@ class BilaMetadata(BaseModel):
     sellohoja: str = ""
     impresos: str = ""  # raw IMPRESOS section content
     record_tail: str = ""  # Type 1 record positions 400-500
+    hash: str = ""  # original HASH from imported file
+    fcreac: str = ""  # original creation date YYYYMMDD
+    hcreac: str = ""  # original creation time HHMMSS
 
 
 class Declaration(BaseModel):

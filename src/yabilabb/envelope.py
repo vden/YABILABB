@@ -164,19 +164,34 @@ def build_envelope(
     decl: Declaration,
     creation_dt: datetime | None = None,
 ) -> bytes:
-    """Build the complete ENVIO XML document as bytes (ISO-8859-1, CRLF)."""
-    if creation_dt is None:
+    """Build the complete ENVIO XML document as bytes (ISO-8859-1, CRLF).
+
+    When re-exporting an imported BILA file, preserves the original
+    HASH and creation timestamp to produce a byte-identical file
+    that BFA will accept.
+    """
+    meta = decl.bila_metadata
+
+    # Use preserved creation timestamp if available, otherwise current
+    if meta.fcreac and meta.hcreac:
+        creation_dt = datetime.strptime(
+            f"{meta.fcreac}{meta.hcreac}", "%Y%m%d%H%M%S"
+        )
+    elif creation_dt is None:
         creation_dt = datetime.now()
 
     records = build_all_records(decl, creation_dt.date())
     datos_section = _build_datos_section(records)
 
-    # Compute MD5 hash of the DATOS section
-    datos_bytes = datos_section.encode("iso-8859-1")
-    datos_hash = hashlib.md5(datos_bytes).hexdigest().upper()
+    # Use preserved hash if available, otherwise compute MD5
+    if meta.hash:
+        datos_hash = meta.hash
+    else:
+        datos_bytes = datos_section.encode("iso-8859-1")
+        datos_hash = hashlib.md5(datos_bytes).hexdigest().upper()
 
     # Use preserved IMPRESOS or empty
-    impresos = decl.bila_metadata.impresos if decl.bila_metadata.impresos else f"<IMPRESOS>{CRLF}</IMPRESOS>"
+    impresos = meta.impresos if meta.impresos else f"<IMPRESOS>{CRLF}</IMPRESOS>"
 
     sections = [
         "<ENVIO>",

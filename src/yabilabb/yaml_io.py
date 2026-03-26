@@ -54,6 +54,9 @@ def load_declaration(path: Path) -> Declaration:
             sellohoja=m.get("sellohoja", ""),
             impresos=m.get("impresos", ""),
             record_tail=m.get("record_tail", ""),
+            hash=m.get("hash", ""),
+            fcreac=m.get("fcreac", ""),
+            hcreac=m.get("hcreac", ""),
         )
 
     return Declaration(
@@ -131,6 +134,12 @@ def save_declaration(decl: Declaration, path: Path) -> None:
         meta_dict["impresos"] = meta.impresos
     if meta.record_tail and meta.record_tail.strip():
         meta_dict["record_tail"] = meta.record_tail
+    if meta.hash:
+        meta_dict["hash"] = meta.hash
+    if meta.fcreac:
+        meta_dict["fcreac"] = meta.fcreac
+    if meta.hcreac:
+        meta_dict["hcreac"] = meta.hcreac
     data["bila_metadata"] = meta_dict
 
     path.write_text(

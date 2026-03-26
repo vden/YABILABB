@@ -100,13 +100,16 @@ def parse_349(path: Path) -> Declaration:
     """Parse a .349 file into a Declaration model."""
     content = _extract_tmp(path)
 
-    # Extract R0 metadata
+    # Extract R0 metadata and RC hash
     bila_meta = BilaMetadata(
         origen=_extract_xml_tag(content, "ORIGEN") or "YBM34920",
         version=_extract_xml_tag(content, "VERSION") or "510104",
         ver_preimp_orig=_extract_xml_tag(content, "VER_PREIMP_ORIG") or "V1.1.4 1-2020",
         version_plataforma=_extract_xml_tag(content, "VERSION_PLATAFORMA") or "010161",
         impresos=_extract_impresos(content),
+        hash=_extract_xml_tag(content, "HASH"),
+        fcreac=_extract_xml_tag(content, "FCREAC"),
+        hcreac=_extract_xml_tag(content, "HCREAC"),
     )
 
     # Extract DATOS section records
