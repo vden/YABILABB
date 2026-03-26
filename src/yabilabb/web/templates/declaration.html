@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{{ decl.exercise_year }} {{ decl.period }} - {{ decl.declarant.nif }}{% endblock %}
+{% block content %}
+
+<p><a href="/modelo/{{ modelo }}">&larr; Modelo {{ modelo }}</a></p>
+
+<section class="card">
+    <h2>Modelo {{ modelo }} - Declarant - {{ decl.exercise_year }} {{ decl.period }}</h2>
+    <form method="post" action="/modelo/{{ modelo }}/declarations/{{ decl_id }}/declarant">
+        <div class="grid">
+            <label>Year <input type="number" name="exercise_year" value="{{ decl.exercise_year }}" required></label>
+            <label>Period
+                <select name="period">
+                    {% for p in ["1T","2T","3T","4T","01","02","03","04","05","06","07","08","09","10","11","12"] %}
+                    <option value="{{ p }}" {{ 'selected' if decl.period == p }}>{{ p }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+        </div>
+        <div class="grid">
+            <label>NIF <input type="text" name="nif" value="{{ decl.declarant.nif }}" required></label>
+            <label>Name <input type="text" name="name" value="{{ decl.declarant.name }}" required></label>
+        </div>
+        <div class="grid">
+            <label>Phone <input type="text" name="phone" value="{{ decl.declarant.phone }}"></label>
+            <label>Contact <input type="text" name="contact_name" value="{{ decl.declarant.contact_name }}"></label>
+            <label>Email <input type="email" name="email" value="{{ decl.declarant.email }}"></label>
+        </div>
+        <button type="submit">Update Declarant</button>
+    </form>
+</section>
+
+<section class="card">
+    <h2>Operators ({{ decl.num_operators }}) - Total: {{ "%.2f"|format(decl.total_amount) }} EUR</h2>
+
+    <div id="operators-table">
+        {% include "_operators.html" %}
+    </div>
+
+    <h3>Add Operator</h3>
+    <form hx-post="/modelo/{{ modelo }}/declarations/{{ decl_id }}/operators"
+          hx-target="#operators-table"
+          hx-swap="innerHTML">
+        <div class="grid grid-5">
+            <label>Country
+                <input type="text" name="country" maxlength="2" placeholder="DE" required
+                       style="text-transform:uppercase">
+            </label>
+            <label>NIF
+                <input type="text" name="nif" placeholder="279463621" required>
+            </label>
+            <label>Name
+                <input type="text" name="name" placeholder="COMPANY NAME" required>
+            </label>
+            <label>Key
+                <select name="key" required>
+                    <option value="E">E - Entregas</option>
+                    <option value="A">A - Adquisiciones</option>
+                    <option value="S" selected>S - Servicios prestados</option>
+                    <option value="I">I - Servicios adquiridos</option>
+                    <option value="T">T - Triangulares</option>
+                    <option value="M">M - Post-import exenta</option>
+                    <option value="H">H - Post-import repr.</option>
+                    <option value="R">R - Transfer. consigna</option>
+                    <option value="D">D - Devol. consigna</option>
+                    <option value="C">C - Sustituciones</option>
+                </select>
+            </label>
+            <label>Amount
+                <input type="text" name="amount" placeholder="1234.56" required>
+            </label>
+        </div>
+        <button type="submit">Add</button>
+    </form>
+</section>
+
+<section class="card">
+    <form method="post" action="/modelo/{{ modelo }}/declarations/{{ decl_id }}/generate">
+        <button type="submit" class="primary">Generate .{{ modelo }} File</button>
+    </form>
+</section>
+
+{% endblock %}

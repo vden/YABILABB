@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Modelos{% endblock %}
+{% block content %}
+
+<section class="card">
+    <h2>Modelos</h2>
+    <div class="modelo-grid">
+        {% for code, info in modelos.items() %}
+        <a href="/modelo/{{ code }}" class="modelo-card">
+            <strong>{{ code }}</strong>
+            <span>{{ info.name }}</span>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Modelo {{ modelo }}{% endblock %}
+{% block content %}
+
+<p><a href="/">&larr; All Modelos</a></p>
+
+<section class="card">
+    <h2>Modelo {{ modelo }} - New Declaration</h2>
+    <form method="post" action="/modelo/{{ modelo }}/declarations">
+        <div class="grid">
+            <label>Year <input type="number" name="exercise_year" value="2026" required></label>
+            <label>Period
+                <select name="period">
+                    <option value="1T">1T - Q1</option>
+                    <option value="2T">2T - Q2</option>
+                    <option value="3T">3T - Q3</option>
+                    <option value="4T">4T - Q4</option>
+                    <optgroup label="Monthly">
+                        {% for m in range(1, 13) %}
+                        <option value="{{ '%02d' % m }}">{{ '%02d' % m }}</option>
+                        {% endfor %}
+                    </optgroup>
+                </select>
+            </label>
+        </div>
+        <div class="grid">
+            <label>NIF <input type="text" name="nif" required placeholder="B12345678"></label>
+            <label>Name <input type="text" name="name" required placeholder="APELLIDO1 APELLIDO2 NOMBRE"></label>
+        </div>
+        <div class="grid">
+            <label>Phone <input type="text" name="phone" placeholder="600000000"></label>
+            <label>Contact Name <input type="text" name="contact_name" placeholder="Same as above if empty"></label>
+            <label>Email <input type="email" name="email" placeholder="email@example.com"></label>
+        </div>
+        <button type="submit">Create</button>
+    </form>
+</section>
+
+<section class="card">
+    <h2>Import {{ modelo_info.extension }} File</h2>
+    <form method="post" action="/modelo/{{ modelo }}/import" enctype="multipart/form-data">
+        <div class="grid">
+            <label>File <input type="file" name="file" accept="{{ modelo_info.extension }}" required></label>
+            <button type="submit">Import</button>
+        </div>
+    </form>
+</section>
+
+{% if declarations %}
+<section class="card">
+    <h2>Saved Declarations</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Year</th>
+                <th>Period</th>
+                <th>NIF</th>
+                <th>Name</th>
+                <th>Operators</th>
+                <th>Total</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for decl_id, decl in declarations %}
+            <tr id="row-{{ decl_id }}">
+                <td>{{ decl.exercise_year }}</td>
+                <td>{{ decl.period }}</td>
+                <td>{{ decl.declarant.nif }}</td>
+                <td>{{ decl.declarant.name }}</td>
+                <td>{{ decl.num_operators }}</td>
+                <td>{{ "%.2f"|format(decl.total_amount) }}</td>
+                <td>
+                    <a href="/modelo/{{ modelo }}/declarations/{{ decl_id }}">Edit</a>
+                    <button hx-delete="/modelo/{{ modelo }}/declarations/{{ decl_id }}"
+                            hx-target="#row-{{ decl_id }}"
+                            hx-swap="outerHTML"
+                            hx-confirm="Delete this declaration?">Del</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
+{% endblock %}

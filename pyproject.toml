@@ -1,0 +1,33 @@
+[project]
+name = "yabilabb"
+version = "0.1.0"
+description = "Yet Another BILA But Better - Bizkaia tax modelo file generator"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+web = [
+    "fastapi>=0.100",
+    "uvicorn[standard]",
+    "jinja2>=3.1",
+    "python-multipart",
+]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+yabilabb = "yabilabb.cli:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

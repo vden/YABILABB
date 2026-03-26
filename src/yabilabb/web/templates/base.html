@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>YABILABB - {% block title %}Modelo 349{% endblock %}</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1><a href="/">YABILABB</a></h1>
+        <small>Yet Another BILA But Better</small>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

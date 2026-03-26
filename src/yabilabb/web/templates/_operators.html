@@ -1,0 +1,41 @@
+{% if decl.operators %}
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Country</th>
+            <th>NIF</th>
+            <th>Name</th>
+            <th>Key</th>
+            <th>Amount</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for op in decl.operators %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ op.country_code }}</td>
+            <td>{{ op.nif }}</td>
+            <td>{{ op.name }}</td>
+            <td>{{ op.operation_key }}</td>
+            <td>{{ "%.2f"|format(op.amount) }}</td>
+            <td>
+                <button hx-delete="/modelo/{{ modelo }}/declarations/{{ decl_id }}/operators/{{ loop.index0 }}"
+                        hx-target="#operators-table"
+                        hx-swap="innerHTML">X</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="5"><strong>Total</strong></td>
+            <td><strong>{{ "%.2f"|format(decl.total_amount) }}</strong></td>
+            <td></td>
+        </tr>
+    </tfoot>
+</table>
+{% else %}
+<p>No operators yet.</p>
+{% endif %}
