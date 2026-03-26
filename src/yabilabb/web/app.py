@@ -14,7 +14,7 @@ from fastapi.templating import Jinja2Templates
 
 from yabilabb.cli import MODELOS
 from yabilabb.models import Declaration, Declarant, Operator
-from yabilabb.writer import write_349
+from yabilabb.writer import write_349, _make_filename
 from yabilabb.parser import parse_349
 from yabilabb.yaml_io import save_declaration, load_declaration
 
@@ -105,7 +105,7 @@ async def create_declaration(
             email=email,
         ),
     )
-    decl_id = f"{exercise_year}{period}_{nif}"
+    decl_id = _make_filename(decl)
     _save_declaration(decl_id, decl, modelo)
     return RedirectResponse(f"/modelo/{modelo}/declarations/{decl_id}", status_code=303)
 
@@ -208,14 +208,15 @@ async def generate(request: Request, modelo: str, decl_id: str):
         return RedirectResponse(f"/modelo/{modelo}", status_code=303)
 
     ext = MODELOS.get(modelo, {}).get("extension", f".{modelo}")
-    tmp_file = Path(f"/tmp/{decl_id}{ext}")
+    filename = _make_filename(decl)
+    tmp_file = Path(f"/tmp/{filename}{ext}")
     write_349(decl, output_path=tmp_file)
 
     data = tmp_file.read_bytes()
     return StreamingResponse(
         BytesIO(data),
         media_type="application/zip",
-        headers={"Content-Disposition": f'attachment; filename="{decl_id}{ext}"'},
+        headers={"Content-Disposition": f'attachment; filename="{filename}{ext}"'},
     )
 
 
@@ -228,7 +229,7 @@ async def import_file(request: Request, modelo: str, file: UploadFile = File(...
 
     try:
         decl = parse_349(tmp_path)
-        decl_id = f"{decl.exercise_year}{decl.period}_{decl.declarant.nif}"
+        decl_id = _make_filename(decl)
         _save_declaration(decl_id, decl, modelo)
         return RedirectResponse(f"/modelo/{modelo}/declarations/{decl_id}", status_code=303)
     finally:
