@@ -193,13 +193,11 @@ def build_envelope(
 
     # Compute BILA hash: salted MD5 of body content
     # Salt = "BIZKAIKO FORU ALDUNDIA" padded to 64 chars
+    # Always recompute - never preserve old hash when content changes
     # Reverse-engineered from net.bizkaia.bila.n4li.utils.MD5
-    if meta.hash:
-        datos_hash = meta.hash
-    else:
-        salt = "BIZKAIKO FORU ALDUNDIA".ljust(64)
-        hash_input = (salt + body).encode("iso-8859-1")
-        datos_hash = hashlib.md5(hash_input).hexdigest().upper()
+    salt = "BIZKAIKO FORU ALDUNDIA".ljust(64)
+    hash_input = (salt + body).encode("iso-8859-1")
+    datos_hash = hashlib.md5(hash_input).hexdigest().upper()
 
     rc_section = _build_rc_section(datos_hash)
 
